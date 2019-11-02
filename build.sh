@@ -1,7 +1,9 @@
-#!/usr/bin/env bash
-
+#! /usr/bin/env bash
+# 先打包文件.并重新加载jar包 -U表示重新加载jar包
 mvn clean package -Dmaven.test.skip=true -U
 
-docker build -t hub.c.163.com/springcloud/eureka .
+# docker打包
+docker build -t registry.cn-hangzhou.aliyuncs.com/shoubi/springcloud:eureka .
 
-docker push hub.c.163.com/springcloud/eureka
+# docker push到阿里云镜像仓库
+docker push registry.cn-hangzhou.aliyuncs.com/shoubi/springcloud:eureka
