@@ -7,14 +7,14 @@ eureka:
     prefer-ip-address: true
     # 外网访问设置
     # 设置的当前服务器的IP 设置后才可以使用外网访问.没设置，默认是内网。本地启动的话，则不需要设置。
-    ip-address: 139.159.207.176
+    #    ip-address: 139.159.207.176
     # 指定当前服务的端口号。设置后才可以访问。本地启动的话，则不需要设置
-    non-secure-port: ${server.port}
+    #    non-secure-port: ${server.port}
     # 设置在Eureka面板显示的服务信息  内网访问
-    instance-id: ${eureka.instance.ip-address}:${spring.application.name}:${server.port}
+    #    instance-id: ${eureka.instance.ip-address}:${spring.application.name}:${server.port}
     # 内网访问设置
     # 设置在Eureka面板显示的服务信息  内网访问
-    #    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
     # 主机名
     hostname: ${spring.application.name}
     # 服务失效时间，失效的服务将被剔除。单位：秒，默认：90
@@ -72,7 +72,6 @@ spring:
   freemarker:
     # 是否优先从文件系统加载template
     prefer-file-system-access: false
-
   #management:
   #  context-path: /
   # 注意使用分布式部署，实现高可用的注册中心的时候，需要使用nohup命令启动jar包时设置端口号，这里设置端口号是不行的
