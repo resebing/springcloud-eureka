@@ -1,12 +1,85 @@
-eureka:
-  client:
-    service-url:
-      defaultZone: http://eureka2:8762/eureka/
-#    register-with-eureka: false
-  server:
-    enable-self-preservation: false
-spring:
-  application:
-    name: eureka
+# 为了让方便管理，将服务到端口都改为8761，避免每次都改端口号
 server:
   port: 8761
+eureka:
+  instance:
+    # 设置通过IP地址访问。若配置该项为true，则优先取ip-address注册服务到注册中心。否则用默认到内网IP注册。若为false，则取hostname注册到注册中心
+    prefer-ip-address: true
+    # 外网访问设置
+    # 设置的当前服务器的IP 设置后才可以使用外网访问.没设置，默认是内网。本地启动的话，则不需要设置。
+    ip-address: 139.159.207.176
+    # 指定当前服务的端口号。设置后才可以访问。本地启动的话，则不需要设置
+    non-secure-port: ${server.port}
+    # 设置在Eureka面板显示的服务信息  内网访问
+    instance-id: ${eureka.instance.ip-address}:${spring.application.name}:${server.port}
+    # 内网访问设置
+    # 设置在Eureka面板显示的服务信息  内网访问
+    #    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+    # 主机名
+    hostname: ${spring.application.name}
+    # 服务失效时间，失效的服务将被剔除。单位：秒，默认：90
+    lease-expiration-duration-in-seconds: 90
+    # 服务续约（心跳）频率，单位：秒，缺省30
+    lease-renewal-interval-in-seconds: 15
+  client:
+    service-url:
+      # 注册中心的URL,默认是8761端口，这里通过将端口号改为8080
+      # 1、启用的时候，还是会报错。因为当前这个Service的服务，是需要等项目运行完毕后，通过心跳机制，过一段时间才会注册到注册中心。实际在注册中心看到到服务名称叫做--》》UNKNOWN
+      # 高可用注册到第二个上面，在Springboot启动的VM options 改为-Dserver.port=8761。即启动的端口号改为8761.然后将当前端口号对应的服务注册到8762
+      # 然后第二个Springboot项目将defaultZone改为http://localhost:8761/eureka 启动的端口号改为-Dserver.port=8762
+      # 这样就实现了互相注册
+      # 互相注册后，Client服务，会在两个Server上实现共享
+      # 如果将8761的Server服务挂掉，那么另一个Server上面Client仍然存在
+      # 但是如果重启了注册到8761到Client的话，会无法注册。因为8761的注册中心已经挂了。此时8762的Server的Client因为心跳机制的30秒时间，Client仍然还存在（实际挂掉了）
+      # 此时需要将Client注册到两个Server上面
+      ## 139.159.207.176华为2核,106.12.194.60:8761百度2核,122.152.216.78腾讯单核
+      #      defaultZone: http://139.159.207.176:8761/eureka,http://122.152.216.78:8761/eureka
+      #    defaultZone: http://localhost:8761/eureka,http://139.159.207.176:8761/eureka
+      #      defaultZone: http://localhost:8761/eureka
+      # Rancher 部署 eureka高可用。将eureka2注册到eureka1
+      defaultZone: http://eureka2:8761/eureka
+    #     defaultZone: http://localhost:8761/eureka
+    # 高可用的情况下，需要将register-with-eureka改为true
+    register-with-eureka: true
+    # 实例是否在eureka服务器上注册自己的信息以供其他服务发现，默认为true 如果是做高可用的发现服务那就要改成true
+    fetch-registry: true
+    # 从eureka服务器注册表中获取注册信息的时间间隔（s），默认为30秒
+    registry-fetch-interval-seconds: 20
+    # 获取实例时是否只保留状态为 UP 的实例，缺省：true
+    filter-only-up-instances: true
+    # Eureka服务端连接空闲时的关闭时间，单位：秒，缺省：30
+    eureka-connection-idle-timeout-seconds: 30
+  server:
+    # 4、server的自我保护机制，基于客户端的上线率。基于开发环境，可以关闭。
+    # 但是生产环境别关闭.15分钟内心跳比例是否低于85%，如果低于85%，则这些服务会被保护起来，服务不会下线。此时会出现服务调用失败的情况，可以结合熔断器，反馈调用失败
+    # 一旦开启了保护机制，则服务注册中心维护的服务实例就不是那么准确了
+    # 自我保护模式被激活的条件是：在 1 分钟后，Renews (last min) < Renews threshold
+    # Renews threshold：Eureka Server 期望每分钟收到客户端实例续约的总数。
+    # Renews (last min)：Eureka Server 最后 1 分钟收到客户端实例续约的总数
+    # 自我保护机制是有意义的，因为如果服务仅仅只是网络原因导致无法访问，如果将服务剔除，网络恢复后，服务并没有上线。这养是不合理的。
+    # 解决办法是开启多个Eureka，并相互注册
+    enable-self-preservation: true
+    # 自我保护阈值因子，默认是0.85，如果阈值比最小值大，则自我保护模式开启
+    renewal-percent-threshold: 0.85
+    # eureka server清理无效节点的时间间隔，默认60000毫秒，即60秒
+    eviction-interval-timer-in-ms: 60000
+    # 集群里eureka节点的变化信息更新的时间间隔，单位为毫秒，默认为10 * 60 * 1000
+    peer-eureka-nodes-update-interval-ms: 600000
+spring:
+  application:
+    # 3、设置当前服务到名称为Eureka
+    name: eureka
+  freemarker:
+    # 是否优先从文件系统加载template
+    prefer-file-system-access: false
+
+  #management:
+  #  context-path: /
+  # 注意使用分布式部署，实现高可用的注册中心的时候，需要使用nohup命令启动jar包时设置端口号，这里设置端口号是不行的
+  # springCloud Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        #暴露所有端点 默认是info,health
+        include: "*"
