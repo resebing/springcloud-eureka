@@ -8,7 +8,7 @@ MAINTAINER lishoubi xxx@163.com
 #COPY eureka-0.0.1-SNAPSHOT.jar /usr/local/tomcat/webapps
 
 # 指定的jar包路径和名称
-ADD target/eureka-1.0.RELEASE.jar app.jar
+ADD target/*.jar app.jar
 
 # 设置端口号
 EXPOSE 8761
